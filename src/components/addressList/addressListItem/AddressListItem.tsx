@@ -1,17 +1,19 @@
 import React, { useState } from "react";
+import {
+  fetchAddressesByUserId,
+  IAddress,
+  setEditing,
+  setModalOpen,
+} from "../../../store/addresses/addressesSlice";
+import { useAppDispatch } from "../../../store/hooks";
+import { setCurrentAddressId } from "../../../store/addresses/addressesSlice";
+import axios from "../../../api/axios";
+import TableRow from "@mui/material/TableRow";
+import TableCell from "@mui/material/TableCell";
+import { Button } from "@mui/material";
+import ConfirmDialog from "../../confirmDialog/ConfirmDialog";
 
-type AddressListItemProps = {
-  addressId: number;
-  line1: string;
-  line2: string;
-  line3: string;
-  line4: string;
-  city: string;
-  postalCode: string;
-  countryCode: string;
-  stateCode: string;
-  stateName: string;
-};
+type AddressListItemProps = IAddress;
 
 export default function AddressListItem({
   line1,
@@ -19,51 +21,53 @@ export default function AddressListItem({
   line3,
   line4,
   city,
-  postalCode,
-  countryCode,
-  stateCode,
-  stateName,
+  postal_code,
+  country_code,
+  state_code,
+  state_name,
+  id,
 }: AddressListItemProps) {
-  const [editing, setEditing] = useState(false);
+  const dispatch = useAppDispatch();
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 
-  const handleClickSave = () => {
-    setEditing(false);
-
-    //call update address api
+  const deleteAddress = () => {
+    axios
+      .delete(`addresses/${id}`)
+      .then(() => dispatch(fetchAddressesByUserId()))
+      .catch(console.log);
   };
 
-  const handleClickDelete = () => {
-    //call delete api
-  };
   return (
-    <tr>
-      <td>{line1}</td>
-      <td>{line2}</td>
-      <td>{line3}</td>
-      <td>{line4}</td>
-      <td>
-        <input
-          type="text"
-          value={city}
-          onChange={() => {
-            return;
-          }}
-          readOnly={!editing}
-          disabled={!editing}
-        />
-      </td>
-      <td>{postalCode}</td>
-      <td>{countryCode}</td>
-      <td>{stateCode}</td>
-      <td>{stateName}</td>
-      <td>
-        {editing ? (
-          <button onClick={handleClickSave}>Save</button>
-        ) : (
-          <button onClick={() => setEditing(true)}>Edit</button>
-        )}
-        <button onClick={handleClickDelete}>Delete</button>
-      </td>
-    </tr>
+    <>
+      <TableRow>
+        <TableCell>{line1}</TableCell>
+        <TableCell>{line2}</TableCell>
+        <TableCell>{line3}</TableCell>
+        <TableCell>{line4}</TableCell>
+        <TableCell>{city}</TableCell>
+        <TableCell>{state_code}</TableCell>
+        <TableCell>{state_name}</TableCell>
+        <TableCell>{postal_code}</TableCell>
+        <TableCell>{country_code}</TableCell>
+        <TableCell>
+          <Button
+            onClick={() => {
+              dispatch(setEditing(true));
+              dispatch(setCurrentAddressId(id));
+              dispatch(setModalOpen(true));
+            }}
+          >
+            Edit
+          </Button>
+          <Button onClick={() => setConfirmDialogOpen(true)}>Delete</Button>
+        </TableCell>
+      </TableRow>
+      <ConfirmDialog
+        message="Do you want to delete this address?"
+        dialogOpen={confirmDialogOpen}
+        handleConfirm={deleteAddress}
+        setDialogOpen={setConfirmDialogOpen}
+      />
+    </>
   );
 }
